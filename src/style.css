@@ -299,6 +299,7 @@ button {
    ============================================ */
 .mode-tabs {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: var(--space-md);
   margin-bottom: var(--space-2xl);
@@ -1204,23 +1205,12 @@ button {
   .action-buttons {
     flex-direction: column;
     width: 100%;
+    gap: var(--space-sm);
   }
 
   .action-buttons .btn {
     width: 100%;
     justify-content: center;
-  }
-
-  .format-selector {
-    flex-direction: column;
-    border-radius: var(--radius-lg);
-    width: 100%;
-  }
-
-  .format-option {
-    width: 100%;
-    text-align: center;
-    border-radius: var(--radius-md);
   }
 
   .upload-zone {
@@ -1239,6 +1229,11 @@ button {
 
   .navbar__title {
     font-size: var(--font-size-lg);
+  }
+
+  .mode-tab {
+    width: 100%;
+    text-align: center;
   }
 
   .preview-card__body {

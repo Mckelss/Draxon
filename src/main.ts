@@ -81,7 +81,7 @@ function renderApp(): void {
         </div>
         <div>
           <div class="navbar__title">Draxon</div>
-          <div class="navbar__subtitle">AI Background Remover</div>
+          <div class="navbar__subtitle">Background Remover & Image Converter</div>
         </div>
       </a>
       <div class="navbar__actions">
@@ -259,7 +259,7 @@ function renderApp(): void {
 
     <!-- Footer -->
     <footer class="footer">
-      <p>Draxon — AI Background Remover • All processing happens locally in your browser • No data is sent to any server</p>
+      <p>Draxon — Background Remover & Image Converter • All processing happens locally in your browser • No data is sent to any server</p>
     </footer>
   `;
 
