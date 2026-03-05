@@ -32,6 +32,7 @@ interface AppState {
   isProcessing: boolean;
   refineEdges: boolean;
   selectedResolution: string;
+  selectedFormat: 'png' | 'jpeg' | 'webp';
   originalWidth: number;
   originalHeight: number;
 }
@@ -44,6 +45,7 @@ const state: AppState = {
   isProcessing: false,
   refineEdges: true,
   selectedResolution: 'original',
+  selectedFormat: 'png',
   originalWidth: 0,
   originalHeight: 0,
 };
@@ -228,12 +230,19 @@ function renderApp(): void {
 
       <!-- Result Actions -->
       <div class="result-actions" id="result-actions" style="display:none;">
-        <button class="btn btn--primary btn--lg" id="btn-download">
-          ${icons.download} Download PNG (Lossless)
-        </button>
-        <button class="btn btn--secondary btn--lg" id="btn-reprocess">
-          ${icons.reset} Reprocess
-        </button>
+        <div class="format-selector" id="format-selector">
+          <button class="format-option format-option--active" data-format="png">PNG (Lossless)</button>
+          <button class="format-option" data-format="jpeg">JPG (White BG)</button>
+          <button class="format-option" data-format="webp">WEBP (Modern)</button>
+        </div>
+        <div class="action-buttons">
+          <button class="btn btn--primary btn--lg" id="btn-download">
+            ${icons.download} Download <span id="download-format-label">PNG</span>
+          </button>
+          <button class="btn btn--secondary btn--lg" id="btn-reprocess">
+            ${icons.reset} Reprocess
+          </button>
+        </div>
       </div>
     </section>
 
@@ -329,6 +338,28 @@ function bindEvents(): void {
     // If we already have a processed blob, re-export at the new resolution
     if (state.processedBlob && !state.isProcessing) {
       reExportAtResolution(state.processedBlob);
+    }
+  });
+
+  // Format selector buttons
+  const formatSelector = document.getElementById('format-selector');
+  formatSelector?.addEventListener('click', (e) => {
+    const target = (e.target as HTMLElement).closest('.format-option') as HTMLElement | null;
+    if (!target) return;
+
+    const formatKey = target.dataset.format as 'png' | 'jpeg' | 'webp';
+    if (!formatKey || formatKey === state.selectedFormat) return;
+
+    // Update active state
+    document.querySelectorAll('.format-option').forEach(el => el.classList.remove('format-option--active'));
+    target.classList.add('format-option--active');
+
+    state.selectedFormat = formatKey;
+
+    // Update download button label
+    const formatLabel = document.getElementById('download-format-label');
+    if (formatLabel) {
+      formatLabel.textContent = formatKey.toUpperCase();
     }
   });
 }
@@ -565,21 +596,69 @@ function finishProcessing(url: string, width: number, height: number): void {
 }
 
 // ============================================
-// Download
+// Download & Conversion
 // ============================================
-function downloadResult(): void {
-  if (!state.processedUrl) return;
+async function downloadResult(): Promise<void> {
+  if (!state.processedUrl || !state.processedBlob) return;
 
-  const link = document.createElement('a');
   const originalName = state.originalFile?.name || 'image';
   const baseName = originalName.replace(/\.[^/.]+$/, '');
-  link.download = `${baseName}_no_bg.png`;
-  link.href = state.processedUrl;
+
+  if (state.selectedFormat === 'png') {
+    // PNG is the native format returned by the AI currently
+    triggerDownload(state.processedUrl, `${baseName}_no_bg.png`);
+    return;
+  }
+
+  // Handle JPG and WEBP conversions using Canvas
+  const preset = RESOLUTION_PRESETS[state.selectedResolution];
+  const targetW = state.selectedResolution === 'original' || !preset ? state.originalWidth : computeFitDimensions(state.originalWidth, state.originalHeight, preset.width, preset.height).width;
+  const targetH = state.selectedResolution === 'original' || !preset ? state.originalHeight : computeFitDimensions(state.originalWidth, state.originalHeight, preset.width, preset.height).height;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = targetW;
+  canvas.height = targetH;
+  const ctx = canvas.getContext('2d')!;
+
+  // If exporting as JPG, draw a white background first since JPG doesn't support transparency
+  if (state.selectedFormat === 'jpeg') {
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, targetW, targetH);
+  }
+
+  // Draw the processed image
+  const img = new Image();
+  img.onload = () => {
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, targetW, targetH);
+
+    // Convert canvas to requested format
+    const quality = state.selectedFormat === 'jpeg' ? 0.92 : 0.95;
+    canvas.toBlob((blob) => {
+      if (blob) {
+        const url = URL.createObjectURL(blob);
+        const ext = state.selectedFormat === 'jpeg' ? 'jpg' : 'webp';
+        triggerDownload(url, `${baseName}_no_bg.${ext}`);
+
+        // Revoke the temporary conversion URL shortly after
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      } else {
+        showToast('Failed to convert image format.', 'error');
+      }
+    }, `image/${state.selectedFormat}`, quality);
+  };
+  img.src = state.processedUrl;
+}
+
+function triggerDownload(url: string, filename: string): void {
+  const link = document.createElement('a');
+  link.download = filename;
+  link.href = url;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-
-  showToast('Download started!', 'success');
+  showToast(`Downloading ${filename.split('.').pop()?.toUpperCase()}...`, 'success');
 }
 
 // ============================================

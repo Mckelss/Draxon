@@ -879,15 +879,61 @@ button {
 }
 
 /* ============================================
-   Result Actions
+   Result Actions & Format Selector
    ============================================ */
 .result-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+  margin-top: var(--space-xl);
+  width: 100%;
+}
+
+.action-buttons {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-md);
-  margin-top: var(--space-xl);
   flex-wrap: wrap;
+}
+
+.format-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  background: var(--bg-card);
+  padding: var(--space-xs);
+  border-radius: var(--radius-full);
+  border: 1px solid var(--bg-glass-border);
+}
+
+.format-option {
+  padding: var(--space-sm) var(--space-lg);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: var(--radius-full);
+  transition: all var(--transition-fast);
+}
+
+.format-option:hover {
+  color: var(--text-primary);
+  background: var(--bg-card-hover);
+}
+
+.format-option--active {
+  background: var(--bg-glass);
+  color: var(--accent-secondary);
+  box-shadow: 0 0 16px var(--accent-glow);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.format-option--active:hover {
+  background: var(--bg-glass);
+  color: var(--accent-primary);
 }
 
 /* ============================================
@@ -1051,12 +1097,29 @@ button {
   }
 
   .result-actions {
-    flex-direction: column;
+    gap: var(--space-md);
   }
 
-  .result-actions .btn {
+  .action-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .action-buttons .btn {
     width: 100%;
     justify-content: center;
+  }
+
+  .format-selector {
+    flex-direction: column;
+    border-radius: var(--radius-lg);
+    width: 100%;
+  }
+
+  .format-option {
+    width: 100%;
+    text-align: center;
+    border-radius: var(--radius-md);
   }
 
   .upload-zone {
