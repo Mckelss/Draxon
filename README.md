@@ -1,1 +1,1 @@
-# Background-Remover & Image Converter
+# Background Remover & Image Converter
