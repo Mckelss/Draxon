@@ -67,9 +67,11 @@ function renderApp(): void {
     <!-- Navbar -->
     <nav class="navbar" id="navbar">
       <a class="navbar__brand" href="/">
-        <div class="navbar__logo">✂️</div>
+        <div class="navbar__logo-text">
+          <span class="logo-m">m</span><span class="logo-c">c</span><span class="logo-g">G</span>
+        </div>
         <div>
-          <div class="navbar__title">BG Eraser</div>
+          <div class="navbar__title">mcg</div>
           <div class="navbar__subtitle">AI Background Remover</div>
         </div>
       </a>
@@ -237,7 +239,7 @@ function renderApp(): void {
 
     <!-- Footer -->
     <footer class="footer">
-      <p>BG Eraser — AI Background Remover • All processing happens locally in your browser • No data is sent to any server</p>
+      <p>mcg — AI Background Remover • All processing happens locally in your browser • No data is sent to any server</p>
     </footer>
   `;
 
