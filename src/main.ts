@@ -25,6 +25,7 @@ const RESOLUTION_PRESETS: Record<string, ResolutionPreset> = {
 // State
 // ============================================
 interface AppState {
+  mode: 'remove-bg' | 'convert';
   originalFile: File | null;
   originalUrl: string;
   processedUrl: string;
@@ -38,6 +39,7 @@ interface AppState {
 }
 
 const state: AppState = {
+  mode: 'remove-bg',
   originalFile: null,
   originalUrl: '',
   processedUrl: '',
@@ -58,6 +60,8 @@ const icons = {
   download: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn__icon"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
   reset: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn__icon"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`,
   image: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="btn__icon"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>`,
+  sun: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`,
+  moon: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`,
 };
 
 // ============================================
@@ -72,7 +76,7 @@ function renderApp(): void {
         <div class="navbar__logo">
           <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
             <path d="M6 4h8l4 3-2 2 3 2-2 3-1 2-2 5H9l2-5-4 0 3-3-4-2 3-3-4-3z" fill="white"/>
-            <circle cx="13" cy="8" r="1.5" fill="rgba(10, 10, 15, 0.9)"/>
+            <circle cx="13" cy="8" r="1.5" fill="#10b981"/>
           </svg>
         </div>
         <div>
@@ -81,6 +85,9 @@ function renderApp(): void {
         </div>
       </a>
       <div class="navbar__actions">
+        <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+          ${icons.moon}
+        </button>
         <div class="badge">
           <span class="badge__dot"></span>
           AI Powered • Client-Side
@@ -88,15 +95,21 @@ function renderApp(): void {
       </div>
     </nav>
 
+    <!-- Mode Tabs -->
+    <div class="mode-tabs">
+      <button class="mode-tab mode-tab--active" data-mode="remove-bg">Background Remover</button>
+      <button class="mode-tab" data-mode="convert">Image Converter</button>
+    </div>
+
     <!-- Hero Section -->
     <section class="hero" id="hero-section">
-      <div class="hero__tag">
+      <div class="hero__tag" id="hero-tag">
         ⚡ Powered by U²Net AI Model
       </div>
-      <h1 class="hero__title">
+      <h1 class="hero__title" id="hero-title">
         Remove Any<br /><span class="hero__title-gradient">Background Instantly</span>
       </h1>
-      <p class="hero__description">
+      <p class="hero__description" id="hero-desc">
         Upload your image and let our AI remove the background in seconds. 
         Full resolution preserved — no compression, no quality loss.
       </p>
@@ -204,7 +217,7 @@ function renderApp(): void {
           <div class="preview-card__header">
             <div class="preview-card__title">
               ${icons.image} Processed
-              <span class="preview-card__badge preview-card__badge--processed">Transparent</span>
+              <span class="preview-card__badge preview-card__badge--processed" id="processed-badge">Transparent</span>
             </div>
             <div class="preview-card__dimensions" id="processed-dimensions">—</div>
           </div>
@@ -230,14 +243,9 @@ function renderApp(): void {
 
       <!-- Result Actions -->
       <div class="result-actions" id="result-actions" style="display:none;">
-        <div class="format-selector" id="format-selector">
-          <button class="format-option format-option--active" data-format="png">PNG (Lossless)</button>
-          <button class="format-option" data-format="jpeg">JPG (White BG)</button>
-          <button class="format-option" data-format="webp">WEBP (Modern)</button>
-        </div>
         <div class="action-buttons">
           <button class="btn btn--primary btn--lg" id="btn-download">
-            ${icons.download} Download <span id="download-format-label">PNG</span>
+            ${icons.download} Download Image
           </button>
           <button class="btn btn--secondary btn--lg" id="btn-reprocess">
             ${icons.reset} Reprocess
@@ -268,6 +276,56 @@ function bindEvents(): void {
   const btnDownload = document.getElementById('btn-download');
   const btnReprocess = document.getElementById('btn-reprocess');
   const refineToggle = document.getElementById('refine-toggle') as HTMLInputElement;
+
+  // Theme toggle
+  const themeToggle = document.getElementById('theme-toggle');
+  if (themeToggle) {
+    const updateThemeIcon = () => {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      themeToggle.innerHTML = isDark ? icons.sun : icons.moon;
+    };
+
+    updateThemeIcon();
+
+    themeToggle.addEventListener('click', () => {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const newTheme = isDark ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      updateThemeIcon();
+    });
+  }
+
+  // Mode Tabs
+  const modeTabs = document.querySelectorAll('.mode-tab');
+  modeTabs.forEach(tab => {
+    tab.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement;
+      const mode = target.dataset.mode as 'remove-bg' | 'convert';
+      if (mode === state.mode || state.isProcessing) return;
+
+      modeTabs.forEach(t => t.classList.remove('mode-tab--active'));
+      target.classList.add('mode-tab--active');
+      state.mode = mode;
+
+      const heroTag = document.getElementById('hero-tag')!;
+      const heroTitle = document.getElementById('hero-title')!;
+      const heroDesc = document.getElementById('hero-desc')!;
+      const refineContainer = document.querySelector('.toggle-group') as HTMLElement;
+
+      if (mode === 'remove-bg') {
+        heroTag.innerHTML = `⚡ Powered by U²Net AI Model`;
+        heroTitle.innerHTML = `Remove Any<br /><span class="hero__title-gradient">Background Instantly</span>`;
+        heroDesc.innerHTML = `Upload your image and let our AI remove the background in seconds. Full resolution preserved — no compression, no quality loss.`;
+        if (refineContainer) refineContainer.style.display = 'flex';
+      } else {
+        heroTag.innerHTML = `🔄 Format & Resolution Converter`;
+        heroTitle.innerHTML = `Convert Any<br /><span class="hero__title-gradient-convert">Image Format</span>`;
+        heroDesc.innerHTML = `Upload your image and convert it instantly between PNG, JPG, and WEBP formats at any resolution.`;
+        if (refineContainer) refineContainer.style.display = 'none';
+      }
+    });
+  });
 
   // Click to upload
   uploadZone.addEventListener('click', () => fileInput.click());
@@ -340,28 +398,6 @@ function bindEvents(): void {
       reExportAtResolution(state.processedBlob);
     }
   });
-
-  // Format selector buttons
-  const formatSelector = document.getElementById('format-selector');
-  formatSelector?.addEventListener('click', (e) => {
-    const target = (e.target as HTMLElement).closest('.format-option') as HTMLElement | null;
-    if (!target) return;
-
-    const formatKey = target.dataset.format as 'png' | 'jpeg' | 'webp';
-    if (!formatKey || formatKey === state.selectedFormat) return;
-
-    // Update active state
-    document.querySelectorAll('.format-option').forEach(el => el.classList.remove('format-option--active'));
-    target.classList.add('format-option--active');
-
-    state.selectedFormat = formatKey;
-
-    // Update download button label
-    const formatLabel = document.getElementById('download-format-label');
-    if (formatLabel) {
-      formatLabel.textContent = formatKey.toUpperCase();
-    }
-  });
 }
 
 // ============================================
@@ -412,7 +448,7 @@ function handleFile(file: File): void {
     state.originalHeight = img.naturalHeight;
 
     const originalDim = document.getElementById('original-dimensions')!;
-    originalDim.textContent = `${img.naturalWidth} × ${img.naturalHeight}`;
+    originalDim.textContent = `${img.naturalWidth} × ${img.naturalHeight} `;
 
     const originalPreview = document.getElementById('original-preview') as HTMLImageElement;
     originalPreview.src = state.originalUrl;
@@ -442,7 +478,31 @@ async function processImage(file: File): Promise<void> {
 
   // Reset progress
   progressFill.style.width = '0%';
+
+  const processedBadge = document.getElementById('processed-badge')!;
+
+  if (state.mode === 'convert') {
+    loadingStatus.textContent = 'Preparing image conversion...';
+    processedBadge.textContent = 'Converted';
+    progressFill.style.width = '100%';
+
+    const rawUrl = URL.createObjectURL(file);
+    const rawImg = new Image();
+    rawImg.onload = () => {
+      state.processedBlob = file;
+      reExportAtResolution(file);
+    };
+    rawImg.onerror = () => {
+      showToast('Failed to load image for conversion.', 'error');
+      state.isProcessing = false;
+      loadingOverlay.classList.add('hidden');
+    };
+    rawImg.src = rawUrl;
+    return;
+  }
+
   loadingStatus.textContent = 'Initializing AI model...';
+  processedBadge.textContent = 'Transparent';
 
   try {
     const config: Config = {
@@ -452,14 +512,14 @@ async function processImage(file: File): Promise<void> {
       },
       progress: (key: string, current: number, total: number) => {
         const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
-        progressFill.style.width = `${percentage}%`;
+        progressFill.style.width = `${percentage}% `;
 
         if (key.includes('fetch')) {
-          loadingStatus.textContent = `Downloading model... ${percentage}%`;
+          loadingStatus.textContent = `Downloading model...${percentage} % `;
         } else if (key.includes('compute')) {
-          loadingStatus.textContent = `Processing image... ${percentage}%`;
+          loadingStatus.textContent = `Processing image...${percentage} % `;
         } else {
-          loadingStatus.textContent = `${key}... ${percentage}%`;
+          loadingStatus.textContent = `${key}...${percentage} % `;
         }
       },
     };
@@ -592,7 +652,7 @@ function finishProcessing(url: string, width: number, height: number): void {
 
   state.isProcessing = false;
 
-  showToast('Background removed successfully!', 'success');
+  showToast(state.mode === 'convert' ? 'Image converted successfully!' : 'Background removed successfully!', 'success');
 }
 
 // ============================================
@@ -603,10 +663,11 @@ async function downloadResult(): Promise<void> {
 
   const originalName = state.originalFile?.name || 'image';
   const baseName = originalName.replace(/\.[^/.]+$/, '');
+  const fileSuffix = state.mode === 'convert' ? '_converted' : '_no_bg';
 
   if (state.selectedFormat === 'png') {
     // PNG is the native format returned by the AI currently
-    triggerDownload(state.processedUrl, `${baseName}_no_bg.png`);
+    triggerDownload(state.processedUrl, `${baseName}${fileSuffix}.png`);
     return;
   }
 
@@ -639,7 +700,7 @@ async function downloadResult(): Promise<void> {
       if (blob) {
         const url = URL.createObjectURL(blob);
         const ext = state.selectedFormat === 'jpeg' ? 'jpg' : 'webp';
-        triggerDownload(url, `${baseName}_no_bg.${ext}`);
+        triggerDownload(url, `${baseName}${fileSuffix}.${ext}`);
 
         // Revoke the temporary conversion URL shortly after
         setTimeout(() => URL.revokeObjectURL(url), 1000);
