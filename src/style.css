@@ -174,27 +174,16 @@ button {
   text-decoration: none;
 }
 
-.navbar__logo-text {
+.navbar__logo {
+  width: 36px;
+  height: 36px;
+  background: var(--accent-gradient);
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
-  font-size: 32px;
-  font-weight: 900;
-  letter-spacing: -0.06em;
-  line-height: 1;
-  user-select: none;
-}
-
-.logo-m,
-.logo-c {
-  color: #a0a0b8;
-  /* Light grayish blue for dark theme readability */
-}
-
-.logo-g {
-  background: linear-gradient(90deg, #a29bfe, #74b9ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  justify-content: center;
+  font-size: 18px;
+  box-shadow: var(--shadow-glow);
 }
 
 .navbar__title {

@@ -67,11 +67,14 @@ function renderApp(): void {
     <!-- Navbar -->
     <nav class="navbar" id="navbar">
       <a class="navbar__brand" href="/">
-        <div class="navbar__logo-text">
-          <span class="logo-m">m</span><span class="logo-c">c</span><span class="logo-g">G</span>
+        <div class="navbar__logo">
+          <svg viewBox="0 0 24 24" width="20" height="20" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 4h8l4 3-2 2 3 2-2 3-1 2-2 5H9l2-5-4 0 3-3-4-2 3-3-4-3z" fill="white"/>
+            <circle cx="13" cy="8" r="1.5" fill="rgba(10, 10, 15, 0.9)"/>
+          </svg>
         </div>
         <div>
-          <div class="navbar__title">mcg</div>
+          <div class="navbar__title">Draxon</div>
           <div class="navbar__subtitle">AI Background Remover</div>
         </div>
       </a>
@@ -239,7 +242,7 @@ function renderApp(): void {
 
     <!-- Footer -->
     <footer class="footer">
-      <p>mcg — AI Background Remover • All processing happens locally in your browser • No data is sent to any server</p>
+      <p>Draxon — AI Background Remover • All processing happens locally in your browser • No data is sent to any server</p>
     </footer>
   `;
 
